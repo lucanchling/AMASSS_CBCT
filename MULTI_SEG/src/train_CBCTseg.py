@@ -38,17 +38,17 @@ def main(args):
     trainingSet,validationSet = GetTrainValDataset(args.dir_patients,args.test_percentage/100)
 
     # print(validationSet)
-    # model = Create_UNETR(
-    #     input_channel=1,
-    #     label_nbr=label_nbr,
-    #     cropSize=cropSize
-    # ).to(DEVICE)
-
-    model = Create_SwinUNETR(
+    model = Create_UNETR(
         input_channel=1,
         label_nbr=label_nbr,
         cropSize=cropSize
     ).to(DEVICE)
+
+    # model = Create_SwinUNETR(
+    #     input_channel=1,
+    #     label_nbr=label_nbr,
+    #     cropSize=cropSize
+    # ).to(DEVICE)
 
     # model.load_state_dict(torch.load("/Users/luciacev-admin/Documents/Projects/Benchmarks/CBCT_Seg_benchmark/data/best_model.pth",map_location=DEVICE))
 
@@ -123,8 +123,8 @@ class TrainingMaster:
         self.device = device
         self.loss_function = DiceCELoss(to_onehot_y=True, softmax=True)
         self.optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
-        self.post_label = AsDiscrete(to_onehot=True,num_classes=nbr_label)
-        self.post_pred = AsDiscrete(argmax=True, to_onehot=True,num_classes=nbr_label)
+        self.post_label = AsDiscrete(to_onehot=nbr_label)
+        self.post_pred = AsDiscrete(argmax=True, to_onehot=nbr_label)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
 
         self.save_model_dir = save_model_dir
@@ -303,22 +303,21 @@ class TrainingMaster:
 if __name__ ==  '__main__':
     parser = argparse.ArgumentParser(description='Training to find ROI for Automatic Landmarks Identification', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
-    input_group = parser.add_argument_group('dir')
+    input_group = parser.add_argument_group('Input')
     input_group.add_argument('--dir_project', type=str, help='Directory with all the project',default='/Users/luciacev-admin/Documents/Projects/Benchmarks/CBCT_Seg_benchmark')
-    input_group.add_argument('--dir_data', type=str, help='Input directory with 3D images', default=parser.parse_args().dir_project+'/data')
-    input_group.add_argument('--dir_patients', type=str, help='Input directory with 3D images',default=parser.parse_args().dir_data+'/Patients') #default = "/Users/luciacev-admin/Desktop/Mandible_Dataset")# 
-    input_group.add_argument('--dir_model', type=str, help='Output directory of the training',default=parser.parse_args().dir_data+'/Models')
 
     input_group.add_argument('-mn', '--model_name', type=str, help='Name of the model', default="MandSeg_model")
+    input_group.add_argument('-me', '--max_epoch', type=int, help='Number of training epocs', default=250)
     input_group.add_argument('-vp', '--test_percentage', type=int, help='Percentage of data to keep for validation', default=13)
     input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128 ,128, 128])
-    input_group.add_argument('-me', '--max_epoch', type=int, help='Number of training epocs', default=250)
     input_group.add_argument('-nl', '--nbr_label', type=int, help='Number of label', default=6)
     input_group.add_argument('-bs', '--batch_size', type=int, help='batch size', default=10)
     input_group.add_argument('-nw', '--nbr_worker', type=int, help='Number of worker', default=10)
 
+    input_group.add_argument('--dir_data', type=str, help='Input directory with 3D images', default=parser.parse_args().dir_project+'/data')
+    input_group.add_argument('--dir_patients', type=str, help='Input directory with 3D images',default=parser.parse_args().dir_data+'/Patients') #default = "/Users/luciacev-admin/Desktop/Mandible_Dataset")# 
+    input_group.add_argument('--dir_model', type=str, help='Output directory of the training',default=parser.parse_args().dir_data+'/Models')
 
 
     args = parser.parse_args()
-    
     main(args)

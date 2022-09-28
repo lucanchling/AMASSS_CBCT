@@ -36,8 +36,8 @@ def main(args):
 		image = img_obj["img"]
 		out = img_obj["out"]
 
-		if not os.path.exists(os.path.dirname(out)):
-			os.makedirs(os.path.dirname(out))
+		# if not os.path.exists(os.path.dirname(out)):
+		# 	os.makedirs(os.path.dirname(out))
 		CloseCBCTSeg(image, image, args.radius)
 
 	for img_obj in img_fn_array:
@@ -45,18 +45,18 @@ def main(args):
 		out = img_obj["out"]
 		# out = img_obj["img"]
 		
-		if not os.path.exists(os.path.dirname(out)):
-			os.makedirs(os.path.dirname(out))
+		# if not os.path.exists(os.path.dirname(out)):
+		# 	os.makedirs(os.path.dirname(out))
 		CorrectHisto(image, image,0.01, 0.99)
 
 if __name__ ==  '__main__':
     parser = argparse.ArgumentParser(description='MD_reader', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     input_group = parser.add_argument_group('Input files')
-    input_group.add_argument('-i','--dir', type=str, help='Input directory with 3D images',required=True)
+    input_group.add_argument('-i','--dir', type=str, help='Input directory with 3D images',default='/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA_out/')
 
     output_params = parser.add_argument_group('Output parameters')
-    output_params.add_argument('-o','--out', type=str, help='Output directory')
+    output_params.add_argument('-o','--out', type=str, help='Output directory',default='')
 
     input_group.add_argument('-rad', '--radius', type=int, help='Radius of the closing', default=3)
     

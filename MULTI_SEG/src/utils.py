@@ -451,7 +451,7 @@ def GetTrainValDataset(dir,val_percentage):
         if True in [ext in basename for ext in [".nrrd", ".nrrd.gz", ".nii", ".nii.gz", ".gipl", ".gipl.gz"]]:
             file_name = basename.split(".")[0]
             # elements_uder = file_name.split("_")
-            patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0]
+            patient = basename.split("_CB")[0].split("_scan")[0].split("_SKIN")[0]
             file_folder = os.path.basename(os.path.dirname(img_fn)) 
 
             # elements_dash = file_name.split("-")
@@ -475,7 +475,7 @@ def GetTrainValDataset(dir,val_percentage):
                 data_dic[file_folder][patient]["scan"] = img_fn
                 data_dic[file_folder][patient]["file_name"] = img_fn
 
-            elif "MERGED-Seg" in basename:
+            elif "MERGED-Seg" in basename or "Seg" in basename:
                 data_dic[file_folder][patient]["seg"] = img_fn
 
                 # seg_img = sitk.ReadImage(img_fn)

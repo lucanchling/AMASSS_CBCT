@@ -6,6 +6,7 @@ import os
 from shutil import copyfile
 
 def main(args):
+    mask_name = "CB"
 
     print("Reading folder : ", args.input_dir)
     print("Selected spacings : ", args.spacing)
@@ -22,39 +23,41 @@ def main(args):
             elements_ = file_name.split("_")
             elements_dash = file_name.split("-")
             # print(elements_dash)
-            patient = ""
-            if len(elements_) != 0:
-                if len(elements_) > 2:
-                    patient = elements_[0] + "_" + elements_[1]
-                elif len(elements_) > 1:
-                    patient = elements_[0]
-            if len(elements_dash) >1:
-                patient = elements_dash[0]
+            if mask_name in elements_ or "scan" in elements_:
+                patient = ""
+                if len(elements_) != 0:
+                    if len(elements_) > 2:
+                        patient = elements_[0] + "_" + elements_[1]
+                    elif len(elements_) > 1:
+                        patient = elements_[0]
+                patient = patient.split("_Seg")[0]           
+                # if len(elements_dash) >1:
+                #     patient = elements_dash[0]
 
-            # patient = "RC-"+elements_[0]
-            # for elem in elements_[1:-1]:
-            #     patient += "_" + elem
+                # patient = "RC-"+elements_[0]
+                # for elem in elements_[1:-1]:
+                #     patient += "_" + elem
 
-            # print(patient)
+                # print(patient)
 
-            folder_name = os.path.basename(os.path.dirname(img_fn))
-            if folder_name in patient:
-                folder_name = os.path.basename(os.path.dirname(os.path.dirname(img_fn)))
-            patient = folder_name + "-" + patient
+                folder_name = os.path.basename(os.path.dirname(img_fn))
+                if folder_name in patient:
+                    folder_name = os.path.basename(os.path.dirname(os.path.dirname(img_fn)))
+                patient = folder_name + "-" + patient
 
-            print(patient)
+                print(patient)
 
-            if patient not in patients.keys():
-                patients[patient] = {}
+                if patient not in patients.keys():
+                    patients[patient] = {}
+    
+                if True in [txt in basename for txt in ["scan","Scan"]]:
+                    patients[patient]["scan"] = img_fn
+                    patients[patient]["dir"] = os.path.dirname(img_fn)
 
-            if True in [txt in basename for txt in ["scan","Scan"]]:
-                patients[patient]["scan"] = img_fn
-                patients[patient]["dir"] = os.path.dirname(img_fn)
-
-            elif True in [txt in basename for txt in ["seg","Seg"]]:
-                patients[patient]["seg"] = img_fn
-            else:
-                print("----> Unrecognise CBCT file found at :", img_fn)
+                elif True in [txt in basename for txt in ["seg","Seg"]]:
+                    patients[patient]["seg"] = img_fn
+                else:
+                    print("----> Unrecognise CBCT file found at :", img_fn)
 
     # if not os.path.exists(SegOutpath):
     #     os.makedirs(SegOutpath)
@@ -107,7 +110,7 @@ def main(args):
         # scan_name = patient + "_scan_Sp"+ spacing + ".nii.gz"
         # seg_name = patient + "_seg_Sp"+ spacing + ".nii.gz"
         scan_name = patient + "_scan.nii.gz"
-        seg_name = patient + "_MAND-Seg.nii.gz"
+        seg_name = patient + "_" + mask_name + "_Mask_Seg.nii.gz"
 
         
 
@@ -119,10 +122,10 @@ if __name__ ==  '__main__':
     parser = argparse.ArgumentParser(description='MD_reader', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     input_group = parser.add_argument_group('Input files')
-    input_group.add_argument('-i','--input_dir', type=str, help='Input directory with 3D images',required=True)
+    input_group.add_argument('-i','--input_dir', type=str, help='Input directory with 3D images',default="/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA/")
 
     output_params = parser.add_argument_group('Output parameters')
-    output_params.add_argument('-o','--out', type=str, help='Output directory', required=True)
+    output_params.add_argument('-o','--out', type=str, help='Output directory', default="/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA_output/")
 
     input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])
 
