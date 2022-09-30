@@ -105,7 +105,52 @@ def main(args):
 
     # TM.Train()
     # TM.Validate()
-    TM.Process(args.max_epoch)
+    # early_stop = EarlyStopping(patience=10, verbose=True)
+    TM.Process(args.max_epoch)#,early_stop)
+
+# class EarlyStopping:
+#     """Early stops the training if validation loss doesn't improve after a given patience."""
+#     def __init__(self, patience=7, verbose=False, delta=0):
+#         """
+#         Args:
+#             patience (int): How long to wait after last time validation loss improved.
+#                             Default: 7
+#             verbose (bool): If True, prints a message for each validation loss improvement. 
+#                             Default: False
+#             delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+#                             Default: 0
+#         """
+#         self.patience = patience
+#         self.verbose = verbose
+#         self.counter = 0
+#         self.best_score = None
+#         self.early_stop = False
+#         self.val_loss_min = np.Inf
+#         self.delta = delta
+
+#     def __call__(self, val_loss, model):
+
+#         score = -val_loss
+
+#         if self.best_score is None:
+#             self.best_score = score
+#             # self.save_checkpoint(val_loss, model)
+#         elif score < self.best_score + self.delta:
+#             self.counter += 1
+#             # print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+#             if self.counter >= self.patience:
+#                 self.early_stop = True
+#         else:
+#             self.best_score = score
+#             # self.save_checkpoint(val_loss, model)
+#             self.counter = 0
+
+#     # def save_checkpoint(self, val_loss, model):
+#     #     '''Saves model when validation loss decrease.'''
+#     #     if self.verbose:
+#     #         print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+#     #     torch.save(model.state_dict(), 'checkpoint.pt')
+#     #     self.val_loss_min = val_loss
 
 class TrainingMaster:
     def __init__(
@@ -123,8 +168,8 @@ class TrainingMaster:
         self.device = device
         self.loss_function = DiceCELoss(to_onehot_y=True, softmax=True)
         self.optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
-        self.post_label = AsDiscrete(to_onehot=nbr_label)
-        self.post_pred = AsDiscrete(argmax=True, to_onehot=nbr_label)
+        self.post_label = AsDiscrete(to_onehot=True,num_classes=nbr_label)#AsDiscrete(to_onehot=nbr_label)
+        self.post_pred = AsDiscrete(argmax=True, to_onehot=True,num_classes=nbr_label)#AsDiscrete(argmax=True, to_onehot=nbr_label)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
 
         self.save_model_dir = save_model_dir
@@ -150,7 +195,7 @@ class TrainingMaster:
 
     
 
-    def Process(self,num_epoch):
+    def Process(self,num_epoch):#,early_stop = None):
         for epoch in range(num_epoch):
             self.Train()
             self.Validate()
@@ -188,7 +233,7 @@ class TrainingMaster:
 
 
 
-    def Validate(self):
+    def Validate(self):#,early_stop = None):
         self.model.eval()
         dice_vals = list()
         epoch_iterator_val = tqdm(
@@ -207,13 +252,9 @@ class TrainingMaster:
 
                 val_outputs = sliding_window_inference(val_inputs, self.FOV, self.predictor, self.model,overlap=0.2)
                 val_labels_list = decollate_batch(val_labels)
-                val_labels_convert = [
-                    self.post_label(val_label_tensor) for val_label_tensor in val_labels_list
-                ]
+                val_labels_convert = [self.post_label(val_label_tensor) for val_label_tensor in val_labels_list]
                 val_outputs_list = decollate_batch(val_outputs)
-                val_output_convert = [
-                    self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list
-                ]
+                val_output_convert = [self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list]
                 self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
                 dice = self.dice_metric.aggregate().item()
                 dice_vals.append(dice)
@@ -221,6 +262,10 @@ class TrainingMaster:
                     "Validate (dice=%2.5f)" % (dice)
                 )
                 # self.SaveScans(val_inputs,val_outputs,step)
+                # if early_stop(self.epoch,dice):
+                #     print("Early stopping at epoch {}".format(self.epoch))
+                #     break
+
             self.dice_metric.reset()
 
 
@@ -309,7 +354,7 @@ if __name__ ==  '__main__':
     input_group.add_argument('-mn', '--model_name', type=str, help='Name of the model', default="MandSeg_model")
     input_group.add_argument('-me', '--max_epoch', type=int, help='Number of training epocs', default=250)
     input_group.add_argument('-vp', '--test_percentage', type=int, help='Percentage of data to keep for validation', default=13)
-    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128 ,128, 128])
+    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[64,64,64])#[128 ,128, 128])
     input_group.add_argument('-nl', '--nbr_label', type=int, help='Number of label', default=6)
     input_group.add_argument('-bs', '--batch_size', type=int, help='batch size', default=10)
     input_group.add_argument('-nw', '--nbr_worker', type=int, help='Number of worker', default=10)

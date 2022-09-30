@@ -45,7 +45,7 @@ def main(args):
                     folder_name = os.path.basename(os.path.dirname(os.path.dirname(img_fn)))
                 patient = folder_name + "-" + patient
 
-                print(patient)
+                # print(patient)
 
                 if patient not in patients.keys():
                     patients[patient] = {}
@@ -61,6 +61,7 @@ def main(args):
 
     # if not os.path.exists(SegOutpath):
     #     os.makedirs(SegOutpath)
+    print("Number of patients found : ", len(patients.keys()))
     
     error = False
     for patient,data in patients.items():
@@ -122,10 +123,10 @@ if __name__ ==  '__main__':
     parser = argparse.ArgumentParser(description='MD_reader', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     input_group = parser.add_argument_group('Input files')
-    input_group.add_argument('-i','--input_dir', type=str, help='Input directory with 3D images',default="/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA/")
+    input_group.add_argument('-i','--input_dir', type=str, help='Input directory with 3D images',default="")
+    input_group.add_argument('-o','--out', type=str, help='Output directory', default='')#parser.parse_args().input_dir+"_NEW")
 
-    output_params = parser.add_argument_group('Output parameters')
-    output_params.add_argument('-o','--out', type=str, help='Output directory', default="/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA_output/")
+    # output_params = parser.add_argument_group('Output parameters')
 
     input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])
 

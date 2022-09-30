@@ -209,7 +209,7 @@ def main(args):
     else:
         model_size = "LARGE"
         MODELS_DICT = MODELS_GROUP["LARGE"]
-        spacing = [0.4,0.4,0.4]
+        spacing = [0.5,0.5,0.5]#[0.4,0.4,0.4]
 
 
     for model_id in MODELS_DICT.keys():
@@ -469,9 +469,9 @@ if __name__ == "__main__":
 
     input_group = parser.add_argument_group('directory')
 
-    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/app/data/scans')
+    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/home/luciacev/Desktop/Luc_Anchling/DATA/TEST')#'/app/data/scans')
     input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default=None)
-    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/app/data/ALL_MODELS')
+    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/home/luciacev/Downloads/ALL_MODELS')#'/home/luciacev/Desktop/Luc_Anchling/Projet_Train_Mask/data/Models')
     input_group.add_argument('-temp', '--temp_fold', type=str, help='temporary folder', default='..')
 
     input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CV","UAW","CB","MAX","MAND"])
@@ -485,8 +485,8 @@ if __name__ == "__main__":
     input_group.add_argument('-vtks','--vtk_smooth', type=int, help='Smoothness of the vtk', default=5)
 
 
-    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.4,0.4,0.4])
-    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128,128,128])
+    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])#[0.4,0.4,0.4])
+    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[64,64,64])#[128,128,128])
     input_group.add_argument('-pr', '--precision', type=float, help='precision of the prediction', default=0.5)
     input_group.add_argument('-mo','--merging_order',nargs="+", type=str, help='order of the merging', default=["SKIN","CV","UAW","CB","MAX","MAND","CAN","RC"])
 
