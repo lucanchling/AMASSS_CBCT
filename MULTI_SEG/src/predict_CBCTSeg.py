@@ -183,7 +183,7 @@ def main(args):
 
     # Find available models in folder
     available_models = {}
-    print("Loading models from", args.dir_models)
+    # print("Loading models from", args.dir_models)
     normpath = os.path.normpath("/".join([args.dir_models, '**', '']))
     for img_fn in glob.iglob(normpath, recursive=True):
         #  print(img_fn)
@@ -192,35 +192,39 @@ def main(args):
             model_id = basename.split("_")[1]
             available_models[model_id] = img_fn
 
-    print("Available models:", available_models)
+    # print("Available models:", available_models)
 
 
 
 
-    # Choose models to use
-    MODELS_DICT = {}
-    models_to_use = {}
-    # models_ID = []  
-    if args.high_def:
-        model_size = "SMALL"
-        MODELS_DICT = MODELS_GROUP["SMALL"]
-        spacing = [0.16,0.16,0.32]
+    # # Choose models to use
+    # MODELS_DICT = {}
+    # models_to_use = {}
+    # # models_ID = []  
+    # if args.high_def:
+    #     model_size = "SMALL"
+    #     MODELS_DICT = MODELS_GROUP["SMALL"]
+    #     spacing = [0.16,0.16,0.32]
 
-    else:
-        model_size = "LARGE"
-        MODELS_DICT = MODELS_GROUP["LARGE"]
-        spacing = [0.5,0.5,0.5]#[0.4,0.4,0.4]
+    # else:
+    #     model_size = "LARGE"
+    #     MODELS_DICT = MODELS_GROUP["LARGE"]
+    #     spacing = [0.5,0.5,0.5]#[0.4,0.4,0.4]
 
 
-    for model_id in MODELS_DICT.keys():
-        if model_id in available_models.keys():
-            for struct in args.skul_structure:
-                if struct in MODELS_DICT[model_id].keys():
-                    if model_id not in models_to_use.keys():
-                        models_to_use[model_id] = available_models[model_id]
-
+    # for model_id in MODELS_DICT.keys():
+    #     if model_id in available_models.keys():
+    #         for struct in args.skul_structure:
+    #             if struct in MODELS_DICT[model_id].keys():
+    #                 if model_id not in models_to_use.keys():
+    #                     models_to_use[model_id] = available_models[model_id]
 
             # if True in [ for struct in args.skul_structure]:
+    MODELS_DICT = MODELS_GROUP["LARGE"]["FF"]
+    model_size = "LARGE"
+    spacing = [0.5,0.5,0.5]
+    models_to_use = {}
+    models_to_use["CB"] = available_models["CB"]
 
 
 
@@ -354,7 +358,7 @@ def main(args):
 
                 net = Create_UNETR(
                     input_channel = 1,
-                    label_nbr= len(MODELS_DICT[model_id].keys()) + 1,
+                    label_nbr= 2,#len(MODELS_DICT[model_id].keys()) + 1,
                     cropSize=cropSize
                 ).to(DEVICE)
 
@@ -369,8 +373,8 @@ def main(args):
 
                 print("Loading model", model_path)
                 net.load_state_dict(torch.load(model_path,map_location=DEVICE))
+                print("Model loaded")
                 net.eval()
-
 
                 val_outputs = sliding_window_inference(input_img, cropSize, args.nbr_GPU_worker, net,overlap=args.precision)
 
@@ -469,12 +473,12 @@ if __name__ == "__main__":
 
     input_group = parser.add_argument_group('directory')
 
-    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/home/luciacev/Desktop/Luc_Anchling/DATA/TEST')#'/app/data/scans')
+    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/Users/luciacev-admin/Desktop/Luc_Anchling/TEST_Files')#/home/luciacev/Desktop/Luc_Anchling/DATA/TEST')#'/app/data/scans')
     input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default=None)
-    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/home/luciacev/Downloads/ALL_MODELS')#'/home/luciacev/Desktop/Luc_Anchling/Projet_Train_Mask/data/Models')
+    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/Users/luciacev-admin/Desktop/Luc_Anchling/AMASSS_MODELS')#'/home/luciacev/Desktop/Luc_Anchling/Projet_Train_Mask/data/Models')
     input_group.add_argument('-temp', '--temp_fold', type=str, help='temporary folder', default='..')
 
-    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CV","UAW","CB","MAX","MAND"])
+    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CB"])#["CV","UAW","CB","MAX","MAND"])
     input_group.add_argument('-hd','--high_def', type=bool, help='Use high def models',default=False)
     input_group.add_argument('-m', '--merge', nargs="+", type=str, help='merge the segmentations', default=["MERGE"])
 
@@ -486,7 +490,7 @@ if __name__ == "__main__":
 
 
     input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])#[0.4,0.4,0.4])
-    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[64,64,64])#[128,128,128])
+    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128,128,128])
     input_group.add_argument('-pr', '--precision', type=float, help='precision of the prediction', default=0.5)
     input_group.add_argument('-mo','--merging_order',nargs="+", type=str, help='order of the merging', default=["SKIN","CV","UAW","CB","MAX","MAND","CAN","RC"])
 
