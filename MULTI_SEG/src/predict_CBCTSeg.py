@@ -1,3 +1,4 @@
+from pyexpat import model
 from models import*
 from utils import*
 import time
@@ -33,7 +34,8 @@ TRANSLATE ={
   "Mandibular-canal" : "MCAN",
   "Upper-airway" : "UAW",
   "Skin" : "SKIN",
-  "Teeth" : "TEETH"
+  "Teeth" : "TEETH",
+  "Cranial Base (Mask)" : "CBMASK",
 }
 
 INV_TRANSLATE = {}
@@ -86,6 +88,10 @@ MODELS_GROUP = {
         "SKIN":
         {
             "SKIN" : 1,
+        },
+        "CBMASK":
+        {
+            "CBMASK" : 1,
         }
     },
 
@@ -180,7 +186,6 @@ def main(args):
         os.makedirs(temp_fold)
 
 
-
     # Find available models in folder
     available_models = {}
     # print("Loading models from", args.dir_models)
@@ -189,42 +194,40 @@ def main(args):
         #  print(img_fn)
         basename = os.path.basename(img_fn)
         if basename.endswith(".pth"):
-            model_id = basename.split("_")[1]
-            available_models[model_id] = img_fn
+                model_id = basename.split("_")[1]
+                if model_id == "Mask":
+                    model_id = basename.split("_")[2] + "MASK"
+                available_models[model_id] = img_fn
 
     # print("Available models:", available_models)
 
 
 
 
-    # # Choose models to use
-    # MODELS_DICT = {}
-    # models_to_use = {}
-    # # models_ID = []  
-    # if args.high_def:
-    #     model_size = "SMALL"
-    #     MODELS_DICT = MODELS_GROUP["SMALL"]
-    #     spacing = [0.16,0.16,0.32]
+    # Choose models to use
+    MODELS_DICT = {}
+    models_to_use = {}
+    # models_ID = []  
+    if args.high_def:
+        model_size = "SMALL"
+        MODELS_DICT = MODELS_GROUP["SMALL"]
+        spacing = [0.16,0.16,0.32]
 
-    # else:
-    #     model_size = "LARGE"
-    #     MODELS_DICT = MODELS_GROUP["LARGE"]
-    #     spacing = [0.5,0.5,0.5]#[0.4,0.4,0.4]
+    else:
+        model_size = "LARGE"
+        MODELS_DICT = MODELS_GROUP["LARGE"]
+        spacing = [0.4,0.4,0.4]
 
 
-    # for model_id in MODELS_DICT.keys():
-    #     if model_id in available_models.keys():
-    #         for struct in args.skul_structure:
-    #             if struct in MODELS_DICT[model_id].keys():
-    #                 if model_id not in models_to_use.keys():
-    #                     models_to_use[model_id] = available_models[model_id]
+    for model_id in MODELS_DICT.keys():
+        if model_id in available_models.keys():
+            for struct in args.skul_structure:
+                if struct in MODELS_DICT[model_id].keys():
+                    if model_id not in models_to_use.keys():
+                        models_to_use[model_id] = available_models[model_id]
 
             # if True in [ for struct in args.skul_structure]:
-    MODELS_DICT = MODELS_GROUP["LARGE"]["FF"]
-    model_size = "LARGE"
-    spacing = [0.5,0.5,0.5]
-    models_to_use = {}
-    models_to_use["CB"] = available_models["CB"]
+
 
 
 
@@ -343,6 +346,7 @@ def main(args):
 
 
             if args.save_in_folder:
+                outputdir = args.output_dir
                 outputdir += "/" + scan_name[0] + "_" + "SegOut"
                 print("Output dir :",outputdir)
 
@@ -358,7 +362,7 @@ def main(args):
 
                 net = Create_UNETR(
                     input_channel = 1,
-                    label_nbr= 2,#len(MODELS_DICT[model_id].keys()) + 1,
+                    label_nbr= len(MODELS_DICT[model_id].keys()) + 1,
                     cropSize=cropSize
                 ).to(DEVICE)
 
@@ -389,9 +393,7 @@ def main(args):
                 seg_arr = seg.numpy()[:]
 
 
-
                 for struct, label in MODELS_DICT[model_id].items():
-                
                     sep_arr = np.where(seg_arr == label, 1,0)
 
                     if (struct == "SKIN"):
@@ -473,30 +475,56 @@ if __name__ == "__main__":
 
     input_group = parser.add_argument_group('directory')
 
-    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/Users/luciacev-admin/Desktop/Luc_Anchling/TEST_Files')#/home/luciacev/Desktop/Luc_Anchling/DATA/TEST')#'/app/data/scans')
-    input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default=None)
-    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/Users/luciacev-admin/Desktop/Luc_Anchling/AMASSS_MODELS')#'/home/luciacev/Desktop/Luc_Anchling/Projet_Train_Mask/data/Models')
-    input_group.add_argument('-temp', '--temp_fold', type=str, help='temporary folder', default='..')
+    ##################################
+    # PATH TO YOUR INPUT FOLDER 
+    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/home/luciacev/Downloads/CLI_bis/Post_1_MA.nii.gz')#'/app/data/scans')
+    ###################################
 
-    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CB"])#["CV","UAW","CB","MAX","MAND"])
+    ###################################
+    # PATH TO YOUR OUTPUT FOLDER
+    input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default='/home/luciacev/Downloads/CLI_bis')
+    ###################################
+    
+    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/home/luciacev/Desktop/Luc_Anchling/MOOODEEELLLSSS/AMASSS')
+    input_group.add_argument('-temp', '--temp_fold', type=str, help='temporary folder', default='/home/luciacev/Documents/Slicer_temp_AMASSS')
+
+    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CBMASK"])
     input_group.add_argument('-hd','--high_def', type=bool, help='Use high def models',default=False)
     input_group.add_argument('-m', '--merge', nargs="+", type=str, help='merge the segmentations', default=["MERGE"])
 
-    input_group.add_argument('-sf', '--save_in_folder', type=bool, help='Save the output in one folder', default=True)
+    input_group.add_argument('-sf', '--save_in_folder', type=bool, help='Save the output in one folder', default=False)
     input_group.add_argument('-id', '--prediction_ID', type=str, help='Generate vtk files', default="Pred")
 
-    input_group.add_argument('-vtk', '--gen_vtk', type=bool, help='Genrate vtk file', default=True)
+    input_group.add_argument('-vtk', '--gen_vtk', type=bool, help='Generate vtk file', default=False)
     input_group.add_argument('-vtks','--vtk_smooth', type=int, help='Smoothness of the vtk', default=5)
 
 
-    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])#[0.4,0.4,0.4])
+    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.4,0.4,0.4])
     input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128,128,128])
     input_group.add_argument('-pr', '--precision', type=float, help='precision of the prediction', default=0.5)
     input_group.add_argument('-mo','--merging_order',nargs="+", type=str, help='order of the merging', default=["SKIN","CV","UAW","CB","MAX","MAND","CAN","RC"])
 
-    input_group.add_argument('-ncw', '--nbr_CPU_worker', type=int, help='Number of worker', default=5)
-    input_group.add_argument('-ngw', '--nbr_GPU_worker', type=int, help='Number of worker', default=1)
-
+    input_group.add_argument('-ncw', '--nbr_CPU_worker', type=int, help='Number of worker', default=1)
+    input_group.add_argument('-ngw', '--nbr_GPU_worker', type=int, help='Number of worker', default=5)
 
     args = parser.parse_args()
+
+    # args = {'input': '/home/luciacev/Downloads/CLI_bis/Post_1_MA.nii.gz',
+    #  'dir_models': '/home/luciacev/Desktop/Luc_Anchling/CB_Mask_Models',
+    #  'high_def': False,
+    #  'skul_structure': ['CBMASK'],
+    #  'merge': ['MERGE'],
+    #   'gen_vtk': False,
+    #   'save_in_folder': False,
+    #   'output_dir': '/home/luciacev/Downloads/CLI_bis',
+    #   'precision': 0.5,
+    #   'vtk_smooth': 5,
+    #    'prediction_ID': 'Pred',
+    #    'nbr_GPU_worker': 5,
+    #    'nbr_CPU_worker': 1,
+    #    'temp_fold': '/home/luciacev/Documents/Slicer_temp_AMASSS',
+    #    'merging_order': ['SKIN', 'CV', 'UAW', 'CB', 'MAX', 'MAND', 'CAN', 'RC']}
+
+
     main(args)
+

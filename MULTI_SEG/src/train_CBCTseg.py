@@ -354,10 +354,12 @@ if __name__ ==  '__main__':
     input_group.add_argument('-mn', '--model_name', type=str, help='Name of the model', default="MandSeg_model")
     input_group.add_argument('-me', '--max_epoch', type=int, help='Number of training epocs', default=250)
     input_group.add_argument('-vp', '--test_percentage', type=int, help='Percentage of data to keep for validation', default=13)
-    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[64,64,64])#[128 ,128, 128])
+    input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128 ,128, 128])
     input_group.add_argument('-nl', '--nbr_label', type=int, help='Number of label', default=6)
     input_group.add_argument('-bs', '--batch_size', type=int, help='batch size', default=10)
     input_group.add_argument('-nw', '--nbr_worker', type=int, help='Number of worker', default=10)
+    input_group.add_argument('-im', '--is_mask', type=bool, help='Is the model a mask model', default=False)
+
 
     input_group.add_argument('--dir_data', type=str, help='Input directory with 3D images', default=parser.parse_args().dir_project+'/data')
     input_group.add_argument('--dir_patients', type=str, help='Input directory with 3D images',default=parser.parse_args().dir_data+'/Patients') #default = "/Users/luciacev-admin/Desktop/Mandible_Dataset")# 
