@@ -202,10 +202,10 @@ def CreateTrainTransform(CropSize = [64,64,64],padding=10,num_sample=10):
         ),
         RandRotated(
             keys=["scan", "seg"],
-            prob=0.15,
-            range_x=np.pi/2,
-            range_y=np.pi/2,
-            range_z=np.pi/2,
+            prob=0.10,
+            range_x=np.pi/4,
+            range_y=np.pi/4,
+            range_z=np.pi/4,
             mode=("bilinear", "nearest"),
             padding_mode="zeros",
         ),
@@ -257,10 +257,10 @@ def CreateValidationTransform():
             ),
             RandRotated(
                 keys=["scan", "seg"],
-                prob=0.15,
-                range_x=np.pi/2,
-                range_y=np.pi/2,
-                range_z=np.pi/2,
+                prob=0.10,
+                range_x=np.pi/4,
+                range_y=np.pi/4,
+                range_z=np.pi/4,
                 mode=("bilinear", "nearest"),   
                 padding_mode="zeros",
             ),
@@ -457,7 +457,7 @@ def GenWorkSpace(dir,test_percentage,out_dir):
 
 
 
-def GetTrainValDataset(dir,val_percentage):
+def GetTrainValDataset(dir,val_percentage,mask_name):
     data_dic = {}
 
     print("Loading data from :",dir)
@@ -470,7 +470,10 @@ def GetTrainValDataset(dir,val_percentage):
         if True in [ext in basename for ext in [".nrrd", ".nrrd.gz", ".nii", ".nii.gz", ".gipl", ".gipl.gz"]]:
             file_name = basename.split(".")[0]
             # elements_uder = file_name.split("_")
-            patient = basename.split("_CB")[0].split("_scan")[0].split("_SKIN")[0]
+            if mask_name != "None":
+                patient = basename.split("_"+mask_name)[0].split("_scan")[0].split("_SKIN")[0]
+            else:
+                patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0]
             file_folder = os.path.basename(os.path.dirname(img_fn)) 
 
             # elements_dash = file_name.split("-")

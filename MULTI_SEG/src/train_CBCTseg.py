@@ -35,7 +35,8 @@ def main(args):
     train_transforms = CreateTrainTransform(cropSize,1,4)
     val_transforms = CreateValidationTransform()
 
-    trainingSet,validationSet = GetTrainValDataset(args.dir_patients,args.test_percentage/100)
+
+    trainingSet,validationSet = GetTrainValDataset(args.dir_patients,args.test_percentage/100,args.mask_name)
 
     # print(validationSet)
     model = Create_UNETR(
@@ -359,6 +360,7 @@ if __name__ ==  '__main__':
     input_group.add_argument('-bs', '--batch_size', type=int, help='batch size', default=10)
     input_group.add_argument('-nw', '--nbr_worker', type=int, help='Number of worker', default=10)
     input_group.add_argument('-im', '--is_mask', type=bool, help='Is the model a mask model', default=False)
+    input_group.add_argument('-mk', '--mask_name', type=str, help='Mask name', default="None")
 
 
     input_group.add_argument('--dir_data', type=str, help='Input directory with 3D images', default=parser.parse_args().dir_project+'/data')

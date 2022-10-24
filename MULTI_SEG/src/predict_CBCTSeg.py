@@ -36,6 +36,8 @@ TRANSLATE ={
   "Skin" : "SKIN",
   "Teeth" : "TEETH",
   "Cranial Base (Mask)" : "CBMASK",
+  "Mandible (Mask)" : "MANDMASK",
+  "Maxilla (Mask)" : "MAXMASK"
 }
 
 INV_TRANSLATE = {}
@@ -51,6 +53,9 @@ LABELS = {
         "MAX" : 4,
         "CV" : 5,
         "SKIN" : 6,
+        "CBMASK" : 7,
+        "MANDMASK" : 8,
+        "MAXMASK" : 9,
     },
     "SMALL":{
         "MAND" : 1,
@@ -92,7 +97,15 @@ MODELS_GROUP = {
         "CBMASK":
         {
             "CBMASK" : 1,
-        }
+        },
+        "MANDMASK":
+        {
+            "MANDMASK" : 1,
+        },
+        "MAXMASK":
+        {
+            "MAXMASK" : 1,
+        },
     },
 
 
@@ -477,18 +490,18 @@ if __name__ == "__main__":
 
     ##################################
     # PATH TO YOUR INPUT FOLDER 
-    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/home/luciacev/Downloads/CLI_bis/Post_1_MA.nii.gz')#'/app/data/scans')
+    input_group.add_argument('-i','--input', type=str, help='Path to the scans folder', default='/home/luciacev/Downloads/TESTMASK')
     ###################################
 
     ###################################
     # PATH TO YOUR OUTPUT FOLDER
-    input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default='/home/luciacev/Downloads/CLI_bis')
+    input_group.add_argument('-o', '--output_dir', type=str, help='Folder to save output', default='/home/luciacev/Downloads/TESTMASK')
     ###################################
     
-    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/home/luciacev/Desktop/Luc_Anchling/MOOODEEELLLSSS/AMASSS')
+    input_group.add_argument('-dm', '--dir_models', type=str, help='Folder with the models', default='/home/luciacev/Desktop/Luc_Anchling/Models/AMASSS')
     input_group.add_argument('-temp', '--temp_fold', type=str, help='temporary folder', default='/home/luciacev/Documents/Slicer_temp_AMASSS')
 
-    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["CBMASK"])
+    input_group.add_argument('-ss', '--skul_structure', nargs="+", type=str, help='Skul structure to segment', default=["MANDMASK","MAXMASK"])
     input_group.add_argument('-hd','--high_def', type=bool, help='Use high def models',default=False)
     input_group.add_argument('-m', '--merge', nargs="+", type=str, help='merge the segmentations', default=["MERGE"])
 
@@ -502,7 +515,7 @@ if __name__ == "__main__":
     input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.4,0.4,0.4])
     input_group.add_argument('-cs', '--crop_size', nargs="+", type=float, help='Wanted crop size', default=[128,128,128])
     input_group.add_argument('-pr', '--precision', type=float, help='precision of the prediction', default=0.5)
-    input_group.add_argument('-mo','--merging_order',nargs="+", type=str, help='order of the merging', default=["SKIN","CV","UAW","CB","MAX","MAND","CAN","RC"])
+    input_group.add_argument('-mo','--merging_order',nargs="+", type=str, help='order of the merging', default=["SKIN","CV","UAW","CB","MAX","MAND","CAN","RC","CBMASK","MANDMASK","MAXMASK"])
 
     input_group.add_argument('-ncw', '--nbr_CPU_worker', type=int, help='Number of worker', default=1)
     input_group.add_argument('-ngw', '--nbr_GPU_worker', type=int, help='Number of worker', default=5)

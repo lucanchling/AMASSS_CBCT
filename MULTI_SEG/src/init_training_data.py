@@ -6,7 +6,7 @@ import os
 from shutil import copyfile
 
 def main(args):
-    mask_name = "CB"
+    mask_name = "Max"
 
     print("Reading folder : ", args.input_dir)
     print("Selected spacings : ", args.spacing)

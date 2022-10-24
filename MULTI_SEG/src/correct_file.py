@@ -53,7 +53,7 @@ if __name__ ==  '__main__':
     parser = argparse.ArgumentParser(description='MD_reader', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     input_group = parser.add_argument_group('Input files')
-    input_group.add_argument('-i','--dir', type=str, help='Input directory with 3D images',default='/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA_out/')
+    input_group.add_argument('-i','--dir', type=str, help='Input directory with 3D images',default='/home/luciacev/Desktop/Luc_Anchling/DATA/TEST/MASK')#'/Users/luciacev-admin/Desktop/Luc_Anchling/CB_MASK_TRAINING_DATA_out/')
 
     output_params = parser.add_argument_group('Output parameters')
     output_params.add_argument('-o','--out', type=str, help='Output directory',default='')
