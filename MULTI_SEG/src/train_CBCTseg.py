@@ -107,51 +107,8 @@ def main(args):
     # TM.Train()
     # TM.Validate()
     # early_stop = EarlyStopping(patience=10, verbose=True)
-    TM.Process(args.max_epoch)#,early_stop)
+    TM.Process(args.max_epoch,args.patience)#,early_stop)
 
-# class EarlyStopping:
-#     """Early stops the training if validation loss doesn't improve after a given patience."""
-#     def __init__(self, patience=7, verbose=False, delta=0):
-#         """
-#         Args:
-#             patience (int): How long to wait after last time validation loss improved.
-#                             Default: 7
-#             verbose (bool): If True, prints a message for each validation loss improvement. 
-#                             Default: False
-#             delta (float): Minimum change in the monitored quantity to qualify as an improvement.
-#                             Default: 0
-#         """
-#         self.patience = patience
-#         self.verbose = verbose
-#         self.counter = 0
-#         self.best_score = None
-#         self.early_stop = False
-#         self.val_loss_min = np.Inf
-#         self.delta = delta
-
-#     def __call__(self, val_loss, model):
-
-#         score = -val_loss
-
-#         if self.best_score is None:
-#             self.best_score = score
-#             # self.save_checkpoint(val_loss, model)
-#         elif score < self.best_score + self.delta:
-#             self.counter += 1
-#             # print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
-#             if self.counter >= self.patience:
-#                 self.early_stop = True
-#         else:
-#             self.best_score = score
-#             # self.save_checkpoint(val_loss, model)
-#             self.counter = 0
-
-#     # def save_checkpoint(self, val_loss, model):
-#     #     '''Saves model when validation loss decrease.'''
-#     #     if self.verbose:
-#     #         print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-#     #     torch.save(model.state_dict(), 'checkpoint.pt')
-#     #     self.val_loss_min = val_loss
 
 class TrainingMaster:
     def __init__(
@@ -187,6 +144,7 @@ class TrainingMaster:
         self.FOV = FOV
 
         self.epoch = 0
+        self.epoch_last_improve = 0
         self.best_dice = 0
         self.loss_lst = []
         self.dice_lst = []
@@ -196,12 +154,17 @@ class TrainingMaster:
 
     
 
-    def Process(self,num_epoch):#,early_stop = None):
+    def Process(self,num_epoch,patience):#,early_stop = None):
         for epoch in range(num_epoch):
-            self.Train()
-            self.Validate()
-            self.epoch += 1
-            self.tensorboard.close()
+            if self.epoch_last_improve < patience:                    
+                self.Train()
+                self.Validate()
+                self.epoch += 1
+                self.tensorboard.close()
+                print("End of epoch: {} (Actual Patience: {})".format(self.epoch,self.epoch_last_improve))
+            else:
+                print("Early Stopping: Model hasn't improved for the {} last epoch \nBest Avg. Dice: {}".format(patience,self.best_dice))
+                break
 
     def Train(self):
         self.model.train()
@@ -274,10 +237,12 @@ class TrainingMaster:
         self.dice_lst.append(mean_dice_val)
 
         if mean_dice_val > self.best_dice:
+            self.epoch_last_improve = 0
             torch.save(self.model.state_dict(), os.path.join(self.save_model_dir,"best_model.pth"))
             print("Model Was Saved ! Current Best Avg. Dice: {} Previous Best Avg. Dice: {}".format(mean_dice_val, self.best_dice))
             self.best_dice = mean_dice_val
         else:
+            self.epoch_last_improve += 1 
             print("Model Was Not Saved ! Best Avg. Dice: {} Current Avg. Dice: {}".format(self.best_dice, mean_dice_val))
 
         self.tensorboard.add_scalar("Validation dice",mean_dice_val,self.epoch)
@@ -361,6 +326,7 @@ if __name__ ==  '__main__':
     input_group.add_argument('-nw', '--nbr_worker', type=int, help='Number of worker', default=10)
     input_group.add_argument('-im', '--is_mask', type=bool, help='Is the model a mask model', default=False)
     input_group.add_argument('-mk', '--mask_name', type=str, help='Mask name', default="None")
+    input_group.add_argument('-pt', '--patience', type=int, help='Patience for Early stopping',default=30)
 
 
     input_group.add_argument('--dir_data', type=str, help='Input directory with 3D images', default=parser.parse_args().dir_project+'/data')
