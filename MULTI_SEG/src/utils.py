@@ -473,7 +473,7 @@ def GetTrainValDataset(dir,val_percentage,mask_name):
             if mask_name != "None":
                 patient = basename.split("_"+mask_name)[0].split("_scan")[0].split("_SKIN")[0]
             else:
-                patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0]
+                patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0].split("_Seg")[0]
             file_folder = os.path.basename(os.path.dirname(img_fn)) 
 
             # elements_dash = file_name.split("-")
