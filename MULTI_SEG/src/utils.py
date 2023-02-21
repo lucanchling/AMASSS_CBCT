@@ -169,7 +169,7 @@ def CreateTrainTransform(CropSize = [64,64,64],padding=10,num_sample=10):
         ScaleIntensityd(
             keys=["scan"],minv = 0.0, maxv = 1.0, factor = None
         ),
-        # CropForegroundd(keys=["scan", "seg"], source_key="scan"),
+        CropForegroundd(keys=["scan", "seg"], source_key="scan"),
         RandCropByPosNegLabeld(
             keys=["scan", "seg"],
             label_key="seg",
@@ -235,40 +235,40 @@ def CreateValidationTransform():
                 keys=["scan"],minv = 0.0, maxv = 1.0, factor = None
             ),
             # CropForegroundd(keys=["scan", "seg"], source_key="scan"),
-            RandFlipd(
-                keys=["scan", "seg"],
-                spatial_axis=[0],
-                prob=0.20,
-            ),
-            RandFlipd(
-                keys=["scan", "seg"],
-                spatial_axis=[1],
-                prob=0.20,
-            ),
-            RandFlipd(
-                keys=["scan", "seg"],
-                spatial_axis=[2],
-                prob=0.20,
-            ),
-            RandRotate90d(
-                keys=["scan", "seg"],
-                prob=0.10,
-                max_k=3,
-            ),
-            RandRotated(
-                keys=["scan", "seg"],
-                prob=0.10,
-                range_x=np.pi/4,
-                range_y=np.pi/4,
-                range_z=np.pi/4,
-                mode=("bilinear", "nearest"),   
-                padding_mode="zeros",
-            ),
-            RandAdjustContrastd(
-                keys=["scan"],
-                prob=0.8,
-                gamma = (0.5,2)
-            ),
+            # RandFlipd(
+            #     keys=["scan", "seg"],
+            #     spatial_axis=[0],
+            #     prob=0.10,
+            # ),
+            # RandFlipd(
+            #     keys=["scan", "seg"],
+            #     spatial_axis=[1],
+            #     prob=0.10,
+            # ),
+            # RandFlipd(
+            #     keys=["scan", "seg"],
+            #     spatial_axis=[2],
+            #     prob=0.10,
+            # ),
+            # RandRotate90d(
+            #     keys=["scan", "seg"],
+            #     prob=0.05,
+            #     max_k=3,
+            # ),
+            # RandRotated(
+            #     keys=["scan", "seg"],
+            #     prob=0.05,
+            #     range_x=np.pi/4,
+            #     range_y=np.pi/4,
+            #     range_z=np.pi/4,
+            #     mode=("bilinear", "nearest"),   
+            #     padding_mode="zeros",
+            # ),
+            # RandAdjustContrastd(
+            #     keys=["scan"],
+            #     prob=0.8,
+            #     gamma = (0.5,2)
+            # ),
             ToTensord(keys=["scan", "seg"]),
         ]
     )
