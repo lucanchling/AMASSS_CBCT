@@ -16,6 +16,7 @@ import glob
 import sys
 import cc3d
 import shutil
+import time
 
 
 
@@ -169,7 +170,7 @@ def CreateTrainTransform(CropSize = [64,64,64],padding=10,num_sample=10):
         ScaleIntensityd(
             keys=["scan"],minv = 0.0, maxv = 1.0, factor = None
         ),
-        CropForegroundd(keys=["scan", "seg"], source_key="scan"),
+        #CropForegroundd(keys=["scan", "seg"], source_key="scan"),
         RandCropByPosNegLabeld(
             keys=["scan", "seg"],
             label_key="seg",
@@ -200,15 +201,15 @@ def CreateTrainTransform(CropSize = [64,64,64],padding=10,num_sample=10):
             prob=0.10,
             max_k=3,
         ),
-        RandRotated(
-            keys=["scan", "seg"],
-            prob=0.10,
-            range_x=np.pi/4,
-            range_y=np.pi/4,
-            range_z=np.pi/4,
-            mode=("bilinear", "nearest"),
-            padding_mode="zeros",
-        ),
+        # RandRotated(
+        #     keys=["scan", "seg"],
+        #     prob=0.10,
+        #     range_x=np.pi/4,
+        #     range_y=np.pi/4,
+        #     range_z=np.pi/4,
+        #     mode=("bilinear", "nearest"),
+        #     padding_mode="zeros",
+        # ),
         RandShiftIntensityd(
             keys=["scan"],
             offsets=0.10,
@@ -729,7 +730,46 @@ def ResampleImage(input,size,spacing,origin,direction,interpolator,IVectorImageT
         resampled_img = resampleImageFilter.GetOutput()
         return resampled_img
 
+def SpacingResample(img_path,output_spacing=[0.5,0.5,0.5],interpolator="Linear",outpath=-1):
+    """Resample the scan to a new size and spacing"""
+    img = sitk.ReadImage(img_path)
+    
+    spacing = np.array(img.GetSpacing())
+    size = np.array(img.GetSize())
+    origin = np.array(img.GetOrigin())
 
+    # print("Input spacing :", spacing)
+    # print("Input size :", size)
+    # print("Input origin :", origin)
+    output_spacing = np.array(output_spacing)
+    output_size = size * spacing / output_spacing
+    output_size = np.ceil(output_size).astype(int)  # Image dimensions are in integers
+
+    # Find the new origin
+    output_physical_size = output_size * output_spacing
+    input_physical_size = size * spacing
+    output_origin = origin - (output_physical_size - input_physical_size) / 2.0
+
+    # print("Output spacing :", output_spacing)
+    # print("Output size :", output_size)
+    # print("Output origin :", output_origin)
+
+    resample = sitk.ResampleImageFilter()
+    resample.SetOutputOrigin(output_origin)
+    resample.SetOutputSpacing(output_spacing.tolist())
+    resample.SetOutputDirection(img.GetDirection())
+    resample.SetSize(output_size.tolist())
+
+    if interpolator == "Linear":
+        resample.SetInterpolator(sitk.sitkLinear)
+    elif interpolator == "NearestNeighbor":
+        resample.SetInterpolator(sitk.sitkNearestNeighbor)
+    
+    if outpath != -1:
+        sitk.WriteImage(resample.Execute(img), outpath)
+    else:
+        return resample.Execute(img)
+    
 def SetSpacing(filepath,output_spacing=[0.5, 0.5, 0.5],interpolator="Linear",outpath=-1):
     """
     Set the spacing of the image at the wanted scale 
@@ -744,7 +784,7 @@ def SetSpacing(filepath,output_spacing=[0.5, 0.5, 0.5],interpolator="Linear",out
      path to save the new image
     """
 
-    print("Reading:", filepath)
+    # print("Reading:", filepath)
     img = itk.imread(filepath)
 
     # Dimension = 3
@@ -776,7 +816,7 @@ def SetSpacing(filepath,output_spacing=[0.5, 0.5, 0.5],interpolator="Linear",out
         pixel_type = img_info[0]
         pixel_dimension = img_info[1]
 
-        print(pixel_type)
+        # print(pixel_type)
 
         VectorImageType = itk.Image[pixel_type, pixel_dimension]
 
@@ -1134,3 +1174,97 @@ def PlotState(img,label,x,y,z):
     plt.imshow(label[0, x, :, :].detach().cpu())
     plt.show()
 
+def GetPatients(data_dir):
+    patients = {}
+
+    normpath = os.path.normpath("/".join([data_dir, '**', '']))
+    for img_fn in sorted(glob.iglob(normpath, recursive=True)):
+        #  print(img_fn)
+        basename = os.path.basename(img_fn)
+
+        if True in [ext in img_fn for ext in [".nrrd", ".nrrd.gz", ".nii", ".nii.gz", ".gipl", ".gipl.gz"]]:
+            patient = basename.split("_Scan")[0].split('_Seg')[0].split("_scan")[0].split("_seg")[0]
+            folder_name = os.path.basename(os.path.dirname(img_fn))
+            patient = folder_name + "-" + patient
+        
+            if patient not in patients.keys():
+                patients[patient] = {}
+    
+            if True in [txt in basename for txt in ["scan","Scan"]]:
+                patients[patient]["scan"] = img_fn
+                patients[patient]["dir"] = os.path.dirname(img_fn)
+
+            elif True in [txt in basename for txt in ["seg","Seg"]]:
+                patients[patient]["seg"] = img_fn
+            else:
+                print("----> Unrecognise CBCT file found at :", img_fn)
+
+    # if not os.path.exists(SegOutpath):
+    #     os.makedirs(SegOutpath)
+    print("Number of patients found : ", len(patients.keys()))
+    
+    error = False
+    for patient,data in patients.items():
+        if "scan" not in data.keys():
+            print("Missing scan for patient :",patient)
+            error = True
+        if "seg" not in data.keys():
+            print("Missing segmentation patient :",patient)
+            error = True
+
+    if error:
+        print("ERROR : folder have missing/unrecognise files", file=sys.stderr)
+        raise
+
+    return patients
+
+
+def InitScan(args,patients,shared_list, num_worker):
+    Outpath = args.out
+    if not os.path.exists(Outpath):
+        os.makedirs(Outpath)
+
+    for patient,data in patients.items():
+
+        scan = data["scan"]
+        seg = data["seg"]
+
+        patient_dir = patient.split("-")[0]
+        patient_name = patient.split("-")[1]
+
+        patient_dirname =  data["dir"].replace(args.input_dir,'')
+        ScanOutpath = os.path.join(Outpath,patient_dir)
+
+        if not os.path.exists(ScanOutpath):
+            os.makedirs(ScanOutpath)
+            
+        # if not os.path.exists(SegOutpath):
+        #     os.makedirs(SegOutpath)
+
+        file_basename = os.path.basename(scan)
+        file_name = file_basename.split(".")
+
+        # Outpath_Seg = os.path.join(ScanOutpath, patient + "_Correct_Seg")
+        # if not os.path.exists(Outpath_Seg):
+        #     os.makedirs(Outpath_Seg)
+
+        sp = args.spacing
+        spacing = str(sp).replace(".","")
+        # scan_name = patient + "_scan_Sp"+ spacing + ".nii.gz"
+        # seg_name = patient + "_seg_Sp"+ spacing + ".nii.gz"
+        scan_name = patient_name + "_Scan.nii.gz"
+        seg_name = patient_name + "_Seg_Max.nii.gz"
+
+        
+
+        SpacingResample(scan,output_spacing=sp,outpath= os.path.join(ScanOutpath,scan_name))
+        SpacingResample(seg,output_spacing=sp,interpolator="NearestNeighbor",outpath= os.path.join(ScanOutpath,seg_name))
+        shared_list[num_worker] += 1
+
+
+def CheckProgress(nb_patients_done, nb_patients):
+    """Check the progress of the process within the different workers and print it in percentage"""
+    # Use tqdm to display the progress
+    for i in tqdm(range(nb_patients)):
+        while sum(nb_patients_done) < i+1:
+            time.sleep(1)
