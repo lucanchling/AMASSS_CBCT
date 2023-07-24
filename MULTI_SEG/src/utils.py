@@ -170,7 +170,7 @@ def CreateTrainTransform(CropSize = [64,64,64],padding=10,num_sample=10):
         ScaleIntensityd(
             keys=["scan"],minv = 0.0, maxv = 1.0, factor = None
         ),
-        #CropForegroundd(keys=["scan", "seg"], source_key="scan"),
+        # CropForegroundd(keys=["scan", "seg"], source_key="scan"),
         RandCropByPosNegLabeld(
             keys=["scan", "seg"],
             label_key="seg",
@@ -458,7 +458,7 @@ def GenWorkSpace(dir,test_percentage,out_dir):
 
 
 
-def GetTrainValDataset(dir,val_percentage,mask_name):
+def GetTrainValDataset(dir,val_percentage,mask_name="None"):
     data_dic = {}
 
     print("Loading data from :",dir)
@@ -474,7 +474,7 @@ def GetTrainValDataset(dir,val_percentage,mask_name):
             if mask_name != "None":
                 patient = basename.split("_"+mask_name)[0].split("_scan")[0].split("_SKIN")[0]
             else:
-                patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0].split("_Seg")[0]
+                patient = basename.split("_MERGED")[0].split("_scan")[0].split("_SKIN")[0].split("_Seg")[0].split('_Scan')[0]
             file_folder = os.path.basename(os.path.dirname(img_fn)) 
 
             # elements_dash = file_name.split("-")
@@ -494,7 +494,7 @@ def GetTrainValDataset(dir,val_percentage,mask_name):
             if patient not in data_dic[file_folder].keys():
                 data_dic[file_folder][patient] = {}
 
-            if "_scan" in basename:
+            if "Scan" in basename:
                 data_dic[file_folder][patient]["scan"] = img_fn
                 data_dic[file_folder][patient]["file_name"] = img_fn
 

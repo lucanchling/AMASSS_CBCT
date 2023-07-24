@@ -239,11 +239,11 @@ class TrainingMaster:
         if mean_dice_val > self.best_dice:
             self.epoch_last_improve = 0
             torch.save(self.model.state_dict(), os.path.join(self.save_model_dir,"best_model.pth"))
-            print("Model Was Saved ! Current Best Avg. Dice: {} Previous Best Avg. Dice: {}".format(mean_dice_val, self.best_dice))
+            print("Model Was Saved ! Delta Dice: {} Current Best Avg. Dice: {}".format(round(mean_dice_val- self.best_dice,5),round(mean_dice_val,5)))
             self.best_dice = mean_dice_val
         else:
             self.epoch_last_improve += 1 
-            print("Model Was Not Saved ! Best Avg. Dice: {} Current Avg. Dice: {}".format(self.best_dice, mean_dice_val))
+            print("Model Was Not Saved ! Best Avg. Dice: {} Current Avg. Dice: {}".format(round(self.best_dice,5), round(mean_dice_val,5)))
 
         self.tensorboard.add_scalar("Validation dice",mean_dice_val,self.epoch)
 

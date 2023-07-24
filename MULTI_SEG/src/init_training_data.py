@@ -40,7 +40,7 @@ if __name__ ==  '__main__':
     input_group.add_argument('-i','--input_dir', type=str, help='Input directory with 3D images',default="")
     input_group.add_argument('-o','--out', type=str, help='Output directory', default='')#parser.parse_args().input_dir+"_NEW")
     input_group.add_argument('-nw','--num_workers', type=int, help='Number of workers', default=1)
-    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])
+    input_group.add_argument('-sp', '--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.4,0.4,0.4])
 
     args = parser.parse_args()
     
